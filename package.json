@@ -1,0 +1,32 @@
+{
+    "name": "chitter-chatter",
+    "version": "1.0.0",
+    "description": "A chat manager for JSPrismarine!",
+    "main": "index.js",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Jakobg1215/chitter-chatter.git"
+    },
+    "keywords": [
+        "npm",
+        "node",
+        "typescript",
+        "plugin",
+        "minecraft-plugin",
+        "mcpe",
+        "bedrock"
+    ],
+    "author": "Jakobg1215",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/Jakobg1215/chitter-chatter/issues"
+    },
+    "homepage": "https://github.com/Jakobg1215/chitter-chatter#readme",
+    "prismarine": {
+        "apiVersion": "1.0",
+        "displayName": "Chitter Chatter"
+    },
+    "devDependencies": {
+        "@jsprismarine/prismarine": "^0.1.0-rc.34"
+    }
+}
