@@ -17,13 +17,15 @@ export default class HelloWorldPlugin {
                 if (message.includes("§")) {
                     event.preventDefault();
                     const newMessage: string[] = [];
-                    // TODO: Make this split infront of §
-                    message.split(" ").forEach(async (word: string) => {
-                        if (word.startsWith("§")) return newMessage.push(word.replace("§", "").slice(1));
-                        return newMessage.push(word);
+                    const messageArray: string[] = Array.from(message);
+                    messageArray.forEach((value, index) => {
+                        if (value === "§" && messageArray[index + 1].match(/[a-r0-9]/)) return;
+                        if (!value.match(/[a-r0-9]/)) return newMessage.push(value);
+                        if (messageArray[index - 1] === "§") return;
+                        newMessage.push(value);
                     });
                     // TODO: Make this not use new ChatEvent and new Chat
-                    return await this.api.getEventManager().emit("chat", new ChatEvent(new Chat(sender, newMessage.join(" "))));
+                    return await this.api.getEventManager().emit("chat", new ChatEvent(new Chat(sender, newMessage.join(""))));
                 }
             }
             if (chatSettings.bannedWords.length) {
@@ -47,7 +49,6 @@ export default class HelloWorldPlugin {
                 }
             }
             const timeOuts: any[] = this.api.getConfigBuilder("messagesTimeOut.json").get("timeOuts", []);
-            console.log(chatSettings.messageTimeout);
             if (chatSettings.messageTimeout > 0) {
                 // FIXME: Fix this so it will work
                 console.log(timeOuts.find(timeOut => timeOut.sender === sender.getName()));
@@ -66,7 +67,9 @@ export default class HelloWorldPlugin {
             this.api.getConfigBuilder("messagesTimeOut.json").set("timeOuts", timeOuts);
         });
     }
-    public async onDisable() { }
+    public async onDisable() {
+        this.api.getConfigBuilder("messagesTimeOut.json").set("timeOuts", []);
+    }
     private async buildChatSettings() {
         const settingsFile = this.api.getConfigBuilder("config.yaml");
         const settings = {
