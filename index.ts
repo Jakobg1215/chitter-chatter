@@ -19,10 +19,10 @@ export default class HelloWorldPlugin {
                     const newMessage: string[] = [];
                     const messageArray: string[] = Array.from(message);
                     messageArray.forEach((value, index) => {
-                        if (value === "§" && messageArray[index + 1].match(/[a-r0-9]/)) return;
+                        if (value === "§") return;
                         if (!value.match(/[a-r0-9]/)) return newMessage.push(value);
                         if (messageArray[index - 1] === "§") return;
-                        newMessage.push(value);
+                        return newMessage.push(value);
                     });
                     // TODO: Make this not use new ChatEvent and new Chat
                     return await this.api.getEventManager().emit("chat", new ChatEvent(new Chat(sender, newMessage.join(""))));
@@ -48,30 +48,28 @@ export default class HelloWorldPlugin {
                     return event.preventDefault();
                 }
             }
-            const timeOuts: any[] = this.api.getConfigBuilder("messagesTimeOut.json").get("timeOuts", []);
             if (chatSettings.messageTimeout > 0) {
-                // FIXME: Fix this so it will work
-                console.log(timeOuts.find(timeOut => timeOut.sender === sender.getName()));
-                if (timeOuts.find(timeOut => timeOut.sender === sender.getName())) {
-                    if (timeOuts.find(timeOut => new Date().getTime() <= timeOut.time + chatSettings.messageTimeout)) {
-                        console.log(timeOuts.filter(timeOut => timeOut.sender === sender.getName()));
-                        this.api.getConfigBuilder("messagesTimeOut.json").set("timeOuts", timeOuts.filter(timeOut => timeOut.sender === sender.getName()));
-                    }
-                    else {
-                        await sender.sendMessage("§cYou can say a message!");
-                        return event.preventDefault();
-                    }
+                const timeOuts: any[] = this.api.getConfigBuilder("messagesTimeOut.json").get("timeOuts", []);
+                const msgTimeOut = timeOuts.find(timeOut => timeOut.sender === sender.getName());
+                if (!msgTimeOut) {
+                    timeOuts.push({ sender: sender.getName(), time: new Date().getTime() });
+                    return this.api.getConfigBuilder("messagesTimeOut.json").set("timeOuts", timeOuts);
                 }
+                if ((Date.now() - msgTimeOut?.time) <= chatSettings.messageTimeout) {
+                    event.preventDefault();
+                    return sender.sendMessage("§cYou can't say a message yet!");
+                }
+                const newTimeOuts = timeOuts.filter(timeOut => timeOut.sender !== sender.getName());
+                newTimeOuts.push({ sender: sender.getName(), time: new Date().getTime() });
+                return this.api.getConfigBuilder("messagesTimeOut.json").set("timeOuts", newTimeOuts);
             }
-            timeOuts.push({ sender: sender.getName(), time: new Date().getTime() });
-            this.api.getConfigBuilder("messagesTimeOut.json").set("timeOuts", timeOuts);
         });
     }
     public async onDisable() {
         this.api.getConfigBuilder("messagesTimeOut.json").set("timeOuts", []);
     }
     private async buildChatSettings() {
-        const settingsFile = this.api.getConfigBuilder("config.yaml");
+        const getSetting = this.api.getConfigBuilder("config.yaml").get;
         const settings = {
             enabled: true,
             blockColoredText: false,
@@ -80,12 +78,12 @@ export default class HelloWorldPlugin {
             characterLimit: 0,
             messageTimeout: 0
         };
-        Object.assign(settings, { enabled: settingsFile.get("enabled", true) });
-        Object.assign(settings, { blockColoredText: settingsFile.get("block-colored-text", false) });
-        Object.assign(settings, { bannedWords: settingsFile.get("banned-words", ["word"]) });
-        Object.assign(settings, { uppercaseLimit: settingsFile.get("uppercase-limit", 0) });
-        Object.assign(settings, { characterLimit: settingsFile.get("character-limit", 0) });
-        Object.assign(settings, { messageTimeout: settingsFile.get("message-timeout", 0) * 1000 });
+        Object.assign(settings, { enabled: getSetting("enabled", true) });
+        Object.assign(settings, { blockColoredText: getSetting("block-colored-text", false) });
+        Object.assign(settings, { bannedWords: getSetting("banned-words", ["word"]) });
+        Object.assign(settings, { uppercaseLimit: getSetting("uppercase-limit", 0) });
+        Object.assign(settings, { characterLimit: getSetting("character-limit", 0) });
+        Object.assign(settings, { messageTimeout: getSetting("message-timeout", 0) * 1000 });
         return settings;
     }
 }
